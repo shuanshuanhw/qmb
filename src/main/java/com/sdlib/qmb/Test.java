@@ -5,6 +5,7 @@ import cn.hutool.core.util.XmlUtil;
 import cn.hutool.http.Header;
 import cn.hutool.http.webservice.SoapClient;
 import cn.hutool.http.webservice.SoapProtocol;
+import org.apache.commons.codec.binary.Base64;
 import org.springframework.web.client.RestClientException;
 import org.w3c.dom.Document;
 
@@ -21,16 +22,21 @@ public class Test {
 
     public static void main(String[] args) {
 
-        String ReaderID = "";
+        String ReaderID = "9177008239";
         String body = "";
         try {
-            String apiURL = "http://10.100.100.144:8280/fslibNew5U/queryReaderInfo";
+     //       String apiURL = "http://202.105.30.39/fslibNew5U/queryReaderInfo";
+            String apiURL = "http://202.105.30.39:8280/fslibNew5U/queryReaderInfo";
+
+            Base64 base64=new Base64();
+            byte[] encode = base64.encode("SD001.lib:159##sd001:af316282b8c94b95bafd324b38a3d6e3".getBytes());
+
             SoapClient client = SoapClient.create(apiURL).init(SoapProtocol.SOAP_1_2)
                     // 设置要请求的方法，传入对应的命名空间
                     .setMethod("impl:queryReaderInfo", "http://impl.services.webservice.ilas.com")
                     // 设置参数，此处自动添加方法的前缀：impl
                     .setParam("identifier", ReaderID)
-                    .header(Header.AUTHORIZATION, "Basic 生成的授权码")
+                    .header(Header.AUTHORIZATION, "Basic "+new String(encode))
                     .header(Header.CONTENT_TYPE, "text/html");
             // 发送请求，参数true表示返回一个格式化后的XML内容
             body = client.send(true);
@@ -42,11 +48,13 @@ public class Test {
             //  返回内容为XML字符串，配合XmlUtil解析这个响应
  //           User user = new User();
             try {
-//                Document document = XmlUtil.parseXml(body);
-//                String xpath = "//soapenv:Envelope/soapenv:Body/ns:queryReaderInfoResponse/ns:return/ax21:";
+                Document document = XmlUtil.parseXml(body);
+
+                String xpath = "//soapenv:Envelope/soapenv:Body/ns:queryReaderInfoResponse/ns:return/ax21:";
 //                String gid = GuidUtil.GetGuid();
 //                user.setId(gid);
-//                String readername = XmlUtil.getByXPath(xpath + "patronName", document, XPathConstants.STRING).toString();
+                String readername = XmlUtil.getByXPath(xpath + "patronName", document, XPathConstants.STRING).toString();
+                System.out.println(readername);
 //                user.setUsername(readername);
 //                user.setReaderid(XmlUtil.getByXPath(xpath + "patronIdentifier", document, XPathConstants.STRING).toString());
 //                user.setIdnumber(XmlUtil.getByXPath(xpath + "certify", document, XPathConstants.STRING).toString());
@@ -74,6 +82,7 @@ public class Test {
 //                user.setUpdateuserid(gid);
 //                user.setAddress(XmlUtil.getByXPath(xpath + "address", document, XPathConstants.STRING).toString());
             } catch (UtilException e) {
+                e.printStackTrace();
           //      AssertUtil.isTrue(true, "读者不存在");
             }
    //         AssertUtil.isTrue(userMapper.insert(user) != 1, "添加读者失败");
