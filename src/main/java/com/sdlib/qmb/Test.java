@@ -6,6 +6,11 @@ import cn.hutool.http.Header;
 import cn.hutool.http.webservice.SoapClient;
 import cn.hutool.http.webservice.SoapProtocol;
 import org.apache.commons.codec.binary.Base64;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -23,8 +28,14 @@ import java.util.Map;
  * 创建时间： 2022/4/29 9:58
  * 创建人： Administrator
  */
+@Component
+@Lazy(value = false)
 
-public class Test {
+public class Test implements InitializingBean {
+    @Override
+    public void afterPropertiesSet() throws Exception {
+
+    }
 
     // 读者信息查询接口
     public void queryReaderInfo()
@@ -169,8 +180,9 @@ public class Test {
 
     }
     // 还书案例
-    public void returnBook()
+    static public void returnBook()
     {
+
         String ReaderID = "9177008239";
         String body = "";
         try {
@@ -184,11 +196,11 @@ public class Test {
                     // 设置要请求的方法，传入对应的命名空间
                     .setMethod("impl:ReturnBook", "http://impl.services.webservice.ilas.com")
                     // 设置参数，此处自动添加方法的前缀：impl
-                    .setParam("identifier", ReaderID)
+                    .setParam("identifier", "1000000109")
                     .setParam("dueLocal","SD001")
-                    .setParam("barcode","")
-                    .setParam("dueman","")
-                    .setParam("keycode",new SetUserCheck().getMD5Code(ReaderID))
+                    .setParam("barcode","FS00101993839")
+                  //  .setParam("dueman","")
+                    .setParam("keycode",new SetUserCheck().getMD5Code("1000000109"))
                     .header(Header.AUTHORIZATION, "Basic "+new String(encode))
                     .header(Header.CONTENT_TYPE, "text/html");
             // 发送请求，参数true表示返回一个格式化后的XML内容
@@ -200,11 +212,14 @@ public class Test {
             //  返回内容为XML字符串，配合XmlUtil解析这个响应
             //           User user = new User();
             try {
-                Document document = XmlUtil.parseXml(body);
-
-                String xpath = "//soapenv:Envelope/soapenv:Body/ns:queryReaderInfoResponse/ns:return/ax21:";
-                String readername = XmlUtil.getByXPath(xpath + "patronName", document, XPathConstants.STRING).toString();
-                System.out.println(readername);
+              //  Document document = XmlUtil.parseXml(body);
+//                String xpath = "//soapenv:Envelope/soapenv:Body/ns:queryReaderInfoResponse/ns:return/ax21:";
+//                String readername = XmlUtil.getByXPath(xpath + "patronName", document, XPathConstants.STRING).toString();
+//                System.out.println(readername);
+                Map<String, Object> result1 = new HashMap<>(50);
+                Map<String, Object> stringObjectMap = XmlUtil.xmlToMap(body, result1);
+                Map<String, Object> soapenvBody = (Map<String, Object>) stringObjectMap.get("soapenv:Body");
+                System.out.println(soapenvBody.toString());
             } catch (UtilException e) {
                 e.printStackTrace();
                 //      AssertUtil.isTrue(true, "读者不存在");
@@ -221,7 +236,6 @@ public class Test {
 
 
     public static void main(String[] args) {
-        Test.queryOverdueBooks();
-
+        Test.returnBook();
     }
 }
